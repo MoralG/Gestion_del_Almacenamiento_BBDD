@@ -31,11 +31,11 @@
   * [MySQL]()
   * [MongoDB]()
 
-* [Alumno 4]()
-  * [Oracle]()
-  * [Postgres]()
-  * [MySQL]()
-  * [MongoDB]()
+* [Alumno 4](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/AlejandroM_Individual.md#alumno-4)
+  * [Oracle](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/AlejandroM_Individual.md#oracle)
+  * [Postgres](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/AlejandroM_Individual.md#postgres)
+  * [MySQL](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/AlejandroM_Individual.md#mysql)
+  * [MongoDB](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/AlejandroM_Individual.md#mongodb)
   
 * [Parte Grupal]()
   * [Oracle]()
