@@ -844,14 +844,21 @@ Como podemos ver, el proceso de control de espacio de almacenamiento se crea con
 
 En MySQL existe el concepto de índice y es el mismo concepto que en oracle, el cual agilizan las busquedas en una tabla, para evitar recorrer toda la tabla para obtener los datos solicitados.
 
-Existen cinco tipos de índices en MySQL:
+Existen cuatro tipos de índices en MySQL:
 
-* PRIMARY KEY: Índice sobre un o más campos donde cada valor es único y nunguno de los valores son NULL. 
-* KEY o INDEX:
-* UNIQUE: Índice que no es `PRIMARY KEY` pero que no permite que los sean iguales.
-* FULLTEXT: Índices que se usan en tablas `MyISAM`, y pueden contener uno o más campos del tipo `CHAR`, `VARCHAR` y `TEXT`. Este índice se utiliza para optimizar la busqueda de palabras clave en las tablas que tienen grandes cantidades de infomación en campos de texto.
-* SPATIAL: Índice que se utiliza sobre columnas de datos geométricos.
+* INDEX: Índice que no único, es decir, índice que admite valores duplicados sin restrinciones, solo para mejorar el tiempo de ejecucción de las consultas.
+  
+* UNIQUE: Índice que restringe el uso valores duplicados, puede haber varios índices `UNIQUE` al contrario que el índice `PRIMARY`.
 
+* PRIMARY: Índice en el que todas las columnas deben de tener un valor único, igual que el `UNIQUE` pero solo puede haber un índice `PRIMARY` en una de las tablas. 
+  
+* FULLTEXT: Índices que pueden contener uno o más campos del tipo `CHAR`, `VARCHAR` y `TEXT`. Este índice se utiliza para optimizar la busqueda de palabras clave en las tablas que tienen grandes cantidades de infomación en campos de texto.
+  
+* SPATIAL: Índice que se emplean para realizar búsquedas sobre datos que componen formas geométricas.
+
+Todos estos índices pueden emplear una o más columnas.
+
+Si lo comparamos con los índices de Oracle, podemos ver un poco de similitud por ejemplo en el caso de los índices `UNIQUE` y `PRIMARY`.
 
 ## MongoDB:
 
@@ -859,3 +866,4 @@ Existen cinco tipos de índices en MySQL:
 ---------------------------------------------------------------
 
 #### Explica los distintos motores de almacenamiento que ofrece MongoDB, sus características principales y en qué casos es más recomendable utilizar cada uno de ellos.
+
