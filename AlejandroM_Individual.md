@@ -178,7 +178,7 @@ Además en el procedimiento tendríamos que cambiar la vista `DBA_USERS` por `AL
 
 Los segmento de rollback se utilizan para deshacer los cambios de las transacciones que no se ha hecho un commit, es decir, para poder volver atrás en caso de un fallo o error en la base de datos.
 
-Para listar los segmentos existentes para realizar un rollback es necesario llamar vista `DBA_ROLLBACK_SEGS` y para mostrar la información de las extensiones la vista `DBA_EXTENTS`.
+Para listar los segmentos existentes para realizar un rollback es necesario llamar a la vista `DBA_ROLLBACK_SEGS` y para mostrar la información de las extensiones a la vista `DBA_EXTENTS`.
 
 ###### Consulta de segmentos de tipo rollback y sus extensiones 
 ```sql
@@ -302,20 +302,42 @@ _SYSSMU25_665916585$     1          65536
 
 #### Queremos cambiar de ubicación un tablespace, pero antes debemos avisar a los usuarios que tienen acceso de lectura o escritura a cualquiera de los objetos almacenados en el mismo. Escribe un procedimiento llamado MostrarUsuariosAccesoTS que obtenga un listado con los nombres de dichos usuarios.
 
+Para listar a todos los usuarios que tengan acceso de escritura y lectura de un tablespace tenemos que tener en cuenta varios tipos de privilegios:
+
+* Mostrar los **propietarios de las tablas** del tablespace.
+* Mostrar los usuarios y que tienen **privilegios sobre las tablas** del tablespace
+* Mostrar los usuarios que tienen **privilegios del sistema** de todas las tablas como:
+     * `ALTER ANY TABLE`
+     * `INSERT ANY TABLE`
+     * `UPDATE ANY TABLE`
+     * `DELETE ANY TABLE`
+     * `DROP ANY TABLE`
+     * `READ ANY TABLE`
+     * `SELECT ANY TABLE`
+* Mostrar a los **propietarios de los indexes** del tablespace.
+* Mostrar a los **propietarios de los clusters** del tablespace.
+* Mostrar los usuarios que tienen un rol, o de manera recursiva tienen un rol, que le otorguen los privilegios del sistema o de las tablas del tablespace.
+
+Sabiendo todo lo que tenemos que mostrar, podemos pasar a realizar el procedimiento:
+
+###### Procedimento que muestra a los usuarios que tienen permiso de lecturas y escritura sobre los objetos de un tablespace
 ```sql
 CREATE OR REPLACE PROCEDURE MostrarUsuariosAccesoTS(p_Tablespace VARCHAR2)
 IS
      cursor c_Usuarios is
-     select USERNAME
-     from DBA_USERS 
+     select USERNAME 
+     from DBA_USERS  -- Utilizamos la vista DBA_USERS para que solo muestre usuarios y no roles.
+-- Indicamos que muestre los propietarios de las tablas.
      where USERNAME in (select distinct OWNER
                         from DBA_TABLES 
                         where TABLESPACE_NAME=p_Tablespace)
+-- Indicamos que muestre los usuarios con privilegios sobre las tablas.
      or USERNAME in (select distinct GRANTEE
                      from DBA_TAB_PRIVS
                      where TABLE_NAME in (select TABLE_NAME
                                           from DBA_TABLES
                                           where TABLESPACE_NAME=p_Tablespace))
+-- Indicamos que muestre los usuarios con privilegios de sistema.
      or USERNAME in (select distinct GRANTEE 
                      from DBA_SYS_PRIVS 
                      where PRIVILEGE='ALTER ANY TABLE'
@@ -325,15 +347,16 @@ IS
                      or PRIVILEGE='DELETE ANY TABLE'
                      or PRIVILEGE='UPDATE ANY TABLE'
                      or PRIVILEGE='INSERT ANY TABLE')
+-- Indicamos que muestre a los usuarios que tenga un rol con privilegios sobre las tablas o sistema.
      or USERNAME in (select distinct GRANTEE
                      from DBA_ROLE_PRIVS
                      where GRANTED_ROLE in (select distinct ROLE
-                                            from ROLE_TAB_PRIVS
+                                            from ROLE_TAB_PRIVS -- Privilegios sobre de tablas
                                             where TABLE_NAME in (select TABLE_NAME
                                                                  from DBA_TABLES
                                                                  where TABLESPACE_NAME=p_Tablespace))
                      or GRANTED_ROLE in (select distinct ROLE
-                                         from ROLE_SYS_PRIVS
+                                         from ROLE_SYS_PRIVS -- Privilegios del sistema
                                          where PRIVILEGE='ALTER ANY TABLE'
                                          or PRIVILEGE='READ ANY TABLE'
                                          or PRIVILEGE='SELECT ANY TABLE'
@@ -341,17 +364,18 @@ IS
                                          or PRIVILEGE='DELETE ANY TABLE'
                                          or PRIVILEGE='UPDATE ANY TABLE'
                                          or PRIVILEGE='INSERT ANY TABLE')
+-- Además indicamos que nos muestre los roles que de manera recursiva tienen roles con privilegios sobre tablas o del sistema.
                      or GRANTED_ROLE in (select distinct GRANTEE
                                          from DBA_ROLE_PRIVS
                                          start with GRANTED_ROLE in (select distinct ROLE
                                                                      from DBA_ROLES 
                                                                      where ROLE in (select ROLE
-                                                                               from ROLE_TAB_PRIVS
+                                                                               from ROLE_TAB_PRIVS -- Privilegios sobre tablas.
                                                                                where TABLE_NAME in (select TABLE_NAME
                                                                                                     from DBA_TABLES
                                                                                                     where TABLESPACE_NAME=p_Tablespace))
                                                                      or ROLE in (select ROLE
-                                                                                 from ROLE_SYS_PRIVS
+                                                                                 from ROLE_SYS_PRIVS -- Privilegios del sistema
                                                                                  where PRIVILEGE='ALTER ANY TABLE'
                                                                                  or PRIVILEGE='READ ANY TABLE'
                                                                                  or PRIVILEGE='SELECT ANY TABLE'
@@ -360,9 +384,11 @@ IS
                                                                                  or PRIVILEGE='UPDATE ANY TABLE'
                                                                                  or PRIVILEGE='INSERT ANY TABLE'))
                                          connect by GRANTED_ROLE = prior GRANTEE))
+-- Indicamos que muestre los propietarios de los indexes del tablespace. 
      or USERNAME in (select OWNER 
                      from DBA_INDEXES 
                      where TABLESPACE_NAME=p_Tablespace)
+-- Indicamos que muestre los propietarios de los clusters del tablespace.
      or USERNAME in (select distinct OWNER 
                      from DBA_CLUSTERS where 
                      TABLESPACE_NAME=p_Tablespace);
@@ -376,6 +402,7 @@ END;
 /
 ```
 
+######  Nos devuelve lo siguiente
 ```sql
 SQL> exec MostrarUsuariosAccesoTS('USERS');
 	
@@ -403,14 +430,15 @@ Procedimiento PL/SQL terminado correctamente.
 
 #### Realiza un procedimiento llamado MostrarInfoTabla que reciba el nombre de una tabla y muestre la siguiente información sobre la misma: propietario, usuarios que pueden leer sus datos, usuarios que pueden cambiar (insertar, modificar o eliminar) sus datos, usuarios que pueden modificar su estructura, usuarios que pueden eliminarla, lista de extensiones y en qué fichero de datos se encuentran.
 
-* `ALTER ANY TABLE`
-* `INSERT ANY TABLE`
-* `UPDATE ANY TABLE`
-* `DELETE ANY TABLE`
-* `DROP ANY TABLE`
-* `READ ANY TABLE`
-* `SELECT ANY TABLE`
+Para realizar este procedimiento hay que tener en cuenta varias cosas:
 
+* Puede haber una tabla con mismo nombre, por consiguiente, tenemos que sacar los propietarios que tiene la tabla y luego mostrar la información de cada tabla con sus respectivos propietarios.
+* Tenemos que sacar para cada apartado de privilegios:
+  * Los privilegios de sistema.
+  * Los privilegios sobre tablas.
+  * Tener en cuenta los roles que tienen los privilegios como en la Tarea 5.
+
+###### Procedimiento que muestra el propietario, los usuarios con privilegios, extensiones y ruta del fichero de una determinada tabla
 ```sql
 set pagesize 999
 set linesize 999
@@ -703,7 +731,7 @@ END;
 /
 ```
 
-##### Prueba
+###### Nos devuelve lo siguiente
 
 ```sql
 SQL> exec MostrarInfoTabla('LOCALES');
@@ -760,8 +788,8 @@ USERS PRIVILEGES DROP TABLES:
 	
 Nº Extensión  Inicio   Siguiente  Mínimo  Máximo        Fichero
 ------------- -------- ---------- ------- ------------- -------------------------------
-1	      65536    1048576	  1	  2147483645	/opt/oracle/oradata/orcl/users01.dbf
-	
+1             65536    1048576    1       2147483645    /opt/oracle/oradata/orcl/users01.dbf
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Procedimiento PL/SQL terminado correctamente.
