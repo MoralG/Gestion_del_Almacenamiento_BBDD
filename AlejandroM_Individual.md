@@ -705,10 +705,10 @@ END;
 
 ##### Prueba
 
-~~~
+```sql
 SQL> exec MostrarInfoTabla('LOCALES');
 	
-.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	
 OWNER: PACO
 	
@@ -762,11 +762,10 @@ Nº Extensión  Inicio   Siguiente  Mínimo  Máximo        Fichero
 ------------- -------- ---------- ------- ------------- -------------------------------
 1	      65536    1048576	  1	  2147483645	/opt/oracle/oradata/orcl/users01.dbf
 	
-.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Procedimiento PL/SQL terminado correctamente.
-
-~~~
+```
 
 ## Postgres:
 
@@ -787,9 +786,7 @@ AND c.relowner = r.oid
 GROUP BY c.relowner;
 ```
 
-Como podemos ver, la el proceso de control de espacio de almacenamiento se crea con una vista y utilizando la función `pg_total_relation_size`.
-
-------------------------EXPLICACIÓN DE LA FUNCION
+Como podemos ver, el proceso de control de espacio de almacenamiento se crea con una vista y utilizando la función `pg_total_relation_size`.
 
 ##### Inconvenientes
 
