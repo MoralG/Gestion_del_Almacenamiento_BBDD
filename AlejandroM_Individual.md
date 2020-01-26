@@ -56,6 +56,7 @@ Al tablespace temporal lo llamaremos `tbs_temp_Tarea2` y como en el tablespace d
 
 Le indicamos que ocupe 5Mb y que se pueda extender.
 
+###### Creamos el tablespace
 ```sql
 CREATE TEMPORARY TABLESPACE tbs_temp_Tarea2
      TEMPFILE 'tbs_temp_Tarea2.f'
@@ -63,10 +64,11 @@ CREATE TEMPORARY TABLESPACE tbs_temp_Tarea2
           AUTOEXTEND ON;
 ```
 
-Ya tenemos el tablespace temporal, ahora vamos a crear un script para asignar a todos los usuarios que esten utilizando el tablespace `USER` por defecto. 
+Ya tenemos el tablespace temporal, ahora vamos a crear un script para asignar a todos los usuarios que esten utilizando el tablespace `USERS` por defecto. 
 
 Para realizar esto, tenemos que consultar en la vista `DBA_USERS`.
 
+###### Script para asignar el tablespace `TBS_TEMP_TAREA2` a los usuario con el tablespace `USERS`
 ```sql
 CREATE or REPLACE PROCEDURE ScriptAsignarTbs_temp_Tarea2
 IS
@@ -130,6 +132,7 @@ Ahora tenemos que borrar los dos tablespaces creados anteriormente, pero hay un 
 
 Vamos a crear un script que asigne el tablespace `TEMP` a los usuarios que tengan el tablespace `tbs_temp_Tarea2`
 
+###### Script para asignar tablespace por defecto a los usuarios del tablespace `TBS_TEMP_TAREA2` 
 ```sql
 CREATE or REPLACE PROCEDURE ScriptAsignarTEMP
 IS
@@ -153,6 +156,7 @@ Ya tenemos el tablespace `tbs_temp_Tarea2` desvinculado de cualquier usuario, ah
 
 Con las siguientes sentencias, eliminamos los tablespaces pero hay que añadir `including contents` para que se borre el contenido y `datafiles` para borrar también el archivo físico correspondiente.
 
+###### Eliminando los tablespaces
 ```sql
 drop tablespace tbs_temp_Tarea2 including contents and datafiles;
 drop tablespace tbs_undo_Tarea1 including contents and datafiles;
@@ -174,30 +178,124 @@ Además en el procedimiento tendríamos que cambiar la vista `DBA_USERS` por `AL
 
 Los segmento de rollback se utilizan para deshacer los cambios de las transacciones que no se ha hecho un commit, es decir, para poder volver atrás en caso de un fallo o error en la base de datos.
 
-Las transacciones se asignan de manera automatica a un segmento de tipo rollback llamdo `SYSTEMT`. También se puede asignar a un segmento concreto con la sentencia `SET TRANSACTION USE ROLLBACK SEGMENT nombre_segmento_rollback`.
+Para listar los segmentos existentes para realizar un rollback es necesario llamar vista `DBA_ROLLBACK_SEGS` y para mostrar la información de las extensiones la vista `DBA_EXTENTS`.
 
-Para listar los segmentos existentes para realizar un rollback es necesario indicarle que muestre los segmentos de tipo `ROLLBACK` en la vista `DBA_SEGMENTS`.
-
+###### Consulta de segmentos de tipo rollback y sus extensiones 
 ```sql
-select SEGMENT_NAME, EXTENT_ID, BYTES from DBA_EXTENTS where SEGMENT_TYPE='ROLLBACK';
-
-SEGMENT_NAME    EXTENT_ID  BYTES
---------------- ---------- ----------
-SYSTEMT         0          65536
-SYSTEMT         1          65536
-SYSTEMT         2          65536
-SYSTEMT         3          65536
-SYSTEMT         4          65536
-SYSTEMT         5          65536
-SYSTEMT         6          65536
-
-7 filas seleccionadas.
+select b.SEGMENT_NAME, a.EXTENT_ID, a.BYTES 
+from DBA_EXTENTS a, DBA_ROLLBACK_SEGS b 
+where a.SEGMENT_NAME=b.SEGMENT_NAME;
 ```
 
-------------------------------------_CORREGIR
+###### Nos devulve lo siguiente:
+```sql
+SEGMENT_NAME			EXTENT_ID  BYTES
+------------------------ ---------- ----------
+SYSTEM                   0          65536
+SYSTEM                   1          65536
+SYSTEM                   2          65536
+SYSTEM                   3          65536
+SYSTEM                   4          65536
+SYSTEM                   5          65536
+SYSTEM                   6          65536
+_SYSSMU1_762089623$      0          65536
+_SYSSMU1_762089623$      1          65536
+_SYSSMU1_762089623$      2          1048576
+_SYSSMU1_762089623$      3          1048576
+_SYSSMU1_762089623$      4          1048576
+_SYSSMU1_762089623$      5          65536
+_SYSSMU1_762089623$      6          65536
+_SYSSMU2_3062791661$     0          65536
+_SYSSMU2_3062791661$     1          65536
+_SYSSMU2_3062791661$     2          1048576
+_SYSSMU2_3062791661$     3          1048576
+_SYSSMU2_3062791661$     4          65536
+_SYSSMU3_1499641855$     0          65536
+_SYSSMU3_1499641855$     1          65536
+_SYSSMU3_1499641855$     2          1048576
+_SYSSMU3_1499641855$     3          1048576
+_SYSSMU3_1499641855$     4          1048576
+_SYSSMU3_1499641855$     5          1048576
+_SYSSMU4_3564003469$     0          65536
+_SYSSMU4_3564003469$     1          65536
+_SYSSMU4_3564003469$     2          1048576
+_SYSSMU4_3564003469$     3          1048576
+_SYSSMU4_3564003469$     4          1048576
+_SYSSMU4_3564003469$     5          65536
+_SYSSMU4_3564003469$     6          65536
+_SYSSMU5_1728379857$     0          65536
+_SYSSMU5_1728379857$     1          65536
+_SYSSMU5_1728379857$     2          1048576
+_SYSSMU6_965511687$      0          65536
+_SYSSMU6_965511687$      1          65536
+_SYSSMU6_965511687$      2          1048576
+_SYSSMU6_965511687$      3          1048576
+_SYSSMU6_965511687$      4          1048576
+_SYSSMU7_2247632671$     0          65536
+_SYSSMU7_2247632671$     1          65536
+_SYSSMU7_2247632671$     2          1048576
+_SYSSMU7_2247632671$     3          1048576
+_SYSSMU7_2247632671$     4          1048576
+_SYSSMU8_437891266$      0          65536
+_SYSSMU8_437891266$      1          65536
+_SYSSMU8_437891266$      2          65536
+_SYSSMU8_437891266$      3          65536
+_SYSSMU8_437891266$      4          65536
+_SYSSMU8_437891266$      5          65536
+_SYSSMU8_437891266$      6          65536
+_SYSSMU8_437891266$      7          65536
+_SYSSMU8_437891266$      8          65536
+_SYSSMU8_437891266$      9          65536
+_SYSSMU8_437891266$      10         65536
+_SYSSMU8_437891266$      11         65536
+_SYSSMU8_437891266$      12         65536
+_SYSSMU8_437891266$      13         65536
+_SYSSMU8_437891266$      14         1048576
+_SYSSMU8_437891266$      15         65536
+_SYSSMU8_437891266$      16         65536
+_SYSSMU9_3215744559$     0          65536
+_SYSSMU9_3215744559$     1          65536
+_SYSSMU9_3215744559$     2          65536
+_SYSSMU9_3215744559$     3          1048576
+_SYSSMU9_3215744559$     4          1048576
+_SYSSMU10_2925533193$    0          65536
+_SYSSMU10_2925533193$    1          65536
+_SYSSMU10_2925533193$    2          1048576
+_SYSSMU10_2925533193$    3          1048576
+_SYSSMU10_2925533193$    4          1048576
+_SYSSMU11_4115543019$    0          65536
+_SYSSMU11_4115543019$    1          65536
+_SYSSMU12_2802753883$    0          65536
+_SYSSMU12_2802753883$    1          65536
+_SYSSMU13_4242710331$    0          65536
+_SYSSMU13_4242710331$    1          65536
+_SYSSMU14_56631763$      0          65536
+_SYSSMU14_56631763$      1          65536
+_SYSSMU15_61031811$      0          65536
+_SYSSMU15_61031811$      1          65536
+_SYSSMU16_4063985861$    0          65536
+_SYSSMU16_4063985861$    1          65536
+_SYSSMU17_914417578$     0          65536
+_SYSSMU17_914417578$     1          65536
+_SYSSMU18_3387250440$    0          65536
+_SYSSMU18_3387250440$    1          65536
+_SYSSMU19_3783430934$    0          65536
+_SYSSMU19_3783430934$    1          65536
+_SYSSMU20_1894689580$    0          65536
+_SYSSMU20_1894689580$    1          65536
+_SYSSMU21_1087759902$    0          65536
+_SYSSMU21_1087759902$    1          65536
+_SYSSMU22_750563217$     0          65536
+_SYSSMU22_750563217$     1          65536
+_SYSSMU23_3484668115$    0          65536
+_SYSSMU23_3484668115$    1          65536
+_SYSSMU24_512801220$     0          65536
+_SYSSMU24_512801220$     1          65536
+_SYSSMU25_665916585$     0          65536
+_SYSSMU25_665916585$     1          65536
 
-select distinct SEGMENT_NAME from DBA_ROLLBACK_SEGS;
-
+102 filas seleccionadas.
+```
 
 ### Tarea 5
 ---------------------------------------------------------------
@@ -205,21 +303,99 @@ select distinct SEGMENT_NAME from DBA_ROLLBACK_SEGS;
 #### Queremos cambiar de ubicación un tablespace, pero antes debemos avisar a los usuarios que tienen acceso de lectura o escritura a cualquiera de los objetos almacenados en el mismo. Escribe un procedimiento llamado MostrarUsuariosAccesoTS que obtenga un listado con los nombres de dichos usuarios.
 
 ```sql
-SELECT DISTINCT OWNER FROM DBA_SEGMENTS WHERE TABLESPACE_NAME='USERS'; 
-
-     OWNER
-     ----------
-     PACO
-     MORALG
+CREATE OR REPLACE PROCEDURE MostrarUsuariosAccesoTS(p_Tablespace VARCHAR2)
+IS
+     cursor c_Usuarios is
+     select USERNAME
+     from DBA_USERS 
+     where USERNAME in (select distinct OWNER
+                        from DBA_TABLES 
+                        where TABLESPACE_NAME=p_Tablespace)
+     or USERNAME in (select distinct GRANTEE
+                     from DBA_TAB_PRIVS
+                     where TABLE_NAME in (select TABLE_NAME
+                                          from DBA_TABLES
+                                          where TABLESPACE_NAME=p_Tablespace))
+     or USERNAME in (select distinct GRANTEE 
+                     from DBA_SYS_PRIVS 
+                     where PRIVILEGE='ALTER ANY TABLE'
+                     or PRIVILEGE='READ ANY TABLE'
+                     or PRIVILEGE='SELECT ANY TABLE'
+                     or PRIVILEGE='DROP ANY TABLE'
+                     or PRIVILEGE='DELETE ANY TABLE'
+                     or PRIVILEGE='UPDATE ANY TABLE'
+                     or PRIVILEGE='INSERT ANY TABLE')
+     or USERNAME in (select distinct GRANTEE
+                     from DBA_ROLE_PRIVS
+                     where GRANTED_ROLE in (select distinct ROLE
+                                            from ROLE_TAB_PRIVS
+                                            where TABLE_NAME in (select TABLE_NAME
+                                                                 from DBA_TABLES
+                                                                 where TABLESPACE_NAME=p_Tablespace))
+                     or GRANTED_ROLE in (select distinct ROLE
+                                         from ROLE_SYS_PRIVS
+                                         where PRIVILEGE='ALTER ANY TABLE'
+                                         or PRIVILEGE='READ ANY TABLE'
+                                         or PRIVILEGE='SELECT ANY TABLE'
+                                         or PRIVILEGE='DROP ANY TABLE'
+                                         or PRIVILEGE='DELETE ANY TABLE'
+                                         or PRIVILEGE='UPDATE ANY TABLE'
+                                         or PRIVILEGE='INSERT ANY TABLE')
+                     or GRANTED_ROLE in (select distinct GRANTEE
+                                         from DBA_ROLE_PRIVS
+                                         start with GRANTED_ROLE in (select distinct ROLE
+                                                                     from DBA_ROLES 
+                                                                     where ROLE in (select ROLE
+                                                                               from ROLE_TAB_PRIVS
+                                                                               where TABLE_NAME in (select TABLE_NAME
+                                                                                                    from DBA_TABLES
+                                                                                                    where TABLESPACE_NAME=p_Tablespace))
+                                                                     or ROLE in (select ROLE
+                                                                                 from ROLE_SYS_PRIVS
+                                                                                 where PRIVILEGE='ALTER ANY TABLE'
+                                                                                 or PRIVILEGE='READ ANY TABLE'
+                                                                                 or PRIVILEGE='SELECT ANY TABLE'
+                                                                                 or PRIVILEGE='DROP ANY TABLE'
+                                                                                 or PRIVILEGE='DELETE ANY TABLE'
+                                                                                 or PRIVILEGE='UPDATE ANY TABLE'
+                                                                                 or PRIVILEGE='INSERT ANY TABLE'))
+                                         connect by GRANTED_ROLE = prior GRANTEE))
+     or USERNAME in (select OWNER 
+                     from DBA_INDEXES 
+                     where TABLESPACE_NAME=p_Tablespace)
+     or USERNAME in (select distinct OWNER 
+                     from DBA_CLUSTERS where 
+                     TABLESPACE_NAME=p_Tablespace);
+BEGIN
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('Hay que informar a los usuarios:');
+     for v_Usuarios in c_Usuarios loop
+          dbms_output.put_line('-'||v_Usuarios.USERNAME);
+     end loop;
+END;
+/
 ```
 
 ```sql
-select distinct OWNER, TABLE_NAME from DBA_INDEXES where TABLESPACE_NAME='USERS';
-select distinct GRANTEE from DBA_TAB_PRIVS where TABLE_NAME='VIVIENDAS';
+SQL> exec MostrarUsuariosAccesoTS('USERS');
+	
+Hay que informar a los usuarios:
+-SYS
+-SYSTEM
+-USUARIOPRUEBA
+-GSMUSER
+-GGSYS
+-GSMADMIN_INTERNAL
+-MDSYS
+-OLAPSYS
+-PACO
+-LUIS
+-USUARIO1
+-WMSYS
+-MORALG
+-NUEVOUSUARIO
 
-select distinct OWNER from DBA_CLUSTERS where TABLESPACE_NAME='USERS';
-
-select distinct OWNER from DBA_INDEXES where TABLESPACE_NAME='USERS';
+Procedimiento PL/SQL terminado correctamente.
 ```
 
 ### Tarea 6
@@ -227,21 +403,19 @@ select distinct OWNER from DBA_INDEXES where TABLESPACE_NAME='USERS';
 
 #### Realiza un procedimiento llamado MostrarInfoTabla que reciba el nombre de una tabla y muestre la siguiente información sobre la misma: propietario, usuarios que pueden leer sus datos, usuarios que pueden cambiar (insertar, modificar o eliminar) sus datos, usuarios que pueden modificar su estructura, usuarios que pueden eliminarla, lista de extensiones y en qué fichero de datos se encuentran.
 
+* `ALTER ANY TABLE`
+* `INSERT ANY TABLE`
+* `UPDATE ANY TABLE`
+* `DELETE ANY TABLE`
+* `DROP ANY TABLE`
+* `READ ANY TABLE`
+* `SELECT ANY TABLE`
+
 ```sql
 set pagesize 999
 set linesize 999
 
 CREATE OR REPLACE PROCEDURE MostrarInfoTabla(p_Tabla VARCHAR2)
-IS
-BEGIN
-     dbms_output.put_line(chr(9));
-     MostrarPropietario(p_Tabla);
-     dbms_output.put_line(chr(9));
-     dbms_output.put_line('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-END;
-/
-
-CREATE OR REPLACE PROCEDURE MostrarPropietario(p_Tabla VARCHAR2)
 IS
      cursor c_Propietarios is
      select distinct OWNER
@@ -251,69 +425,192 @@ IS
      v_Propietario VARCHAR2(50);
 BEGIN
      for v_Propietario in c_Propietarios loop
-          dbms_output.put_line(chr(9));
-          dbms_output.put_line('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-          dbms_output.put_line(chr(9));
-          dbms_output.put_line('OWNER: '||v_Propietario.OWNER);
-          MostrarUserSelect(p_Tabla, v_Propietario.OWNER);
+          MostrarPropietario(p_Tabla, v_Propietario.OWNER);
+          MostrarUserPrivsREAD(p_Tabla, v_Propietario.OWNER);
           MostartUserDML(p_Tabla, v_Propietario.OWNER);
           MostrarUserAlter(p_Tabla, v_Propietario.OWNER);
           MostrarUserDrop(p_Tabla, v_Propietario.OWNER);
           MostrarExt(p_Tabla, v_Propietario.OWNER);
      end loop;
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
 END;
 /
 
-CREATE OR REPLACE PROCEDURE MostrarUserSelect(p_Tabla VARCHAR2,
-                                              p_Propietario VARCHAR2)
+CREATE OR REPLACE PROCEDURE MostrarPropietario(p_Tabla VARCHAR2,
+                                               p_Propietario VARCHAR2)
 IS
-     cursor c_Users is
-     select distinct GRANTEE 
-     from DBA_TAB_PRIVS 
-     where TABLE_NAME=p_Tabla
-     and PRIVILEGE='SELECT'
-     and OWNER=p_Propietario;
 BEGIN
-     for v_Usuario in c_Users loop
-          dbms_output.put_line(chr(9));
-          dbms_output.put_line('USERS PRIVILEGES READ: ');
-          dbms_output.put_line(chr(9)||'-'||v_Usuario.GRANTEE);
-     end loop;
-END; 
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('OWNER: '||p_Propietario);
+END;
 /
+
+CREATE OR REPLACE PROCEDURE MostrarUserPrivsREAD(p_Tabla VARCHAR2,
+                                                 p_Propietario VARCHAR2)
+IS
+     cursor c_Usuarios is
+     select USERNAME
+     from DBA_USERS 
+     where USERNAME in (select distinct GRANTEE
+                        from DBA_TAB_PRIVS
+                        where TABLE_NAME in (select TABLE_NAME
+                                             from DBA_TABLES
+                                             where TABLE_NAME=p_Tabla)
+                        and PRIVILEGE='SELECT'
+                        and OWNER=p_Propietario)
+     or USERNAME in (select distinct GRANTEE 
+                from DBA_SYS_PRIVS 
+                where PRIVILEGE='READ ANY TABLE'
+                or PRIVILEGE='SELECT ANY TABLE')
+     or USERNAME in (select distinct GRANTEE
+                     from DBA_ROLE_PRIVS
+                     where GRANTED_ROLE in (select distinct ROLE
+                                            from ROLE_TAB_PRIVS
+                                            where TABLE_NAME in (select TABLE_NAME
+                                                                 from DBA_TABLES
+                                                                 where TABLE_NAME=p_Tabla)
+                                            and PRIVILEGE='SELECT'
+                                            and OWNER=p_Propietario)
+                     or GRANTED_ROLE in (select distinct ROLE
+                                         from ROLE_SYS_PRIVS
+                                         where PRIVILEGE='READ ANY TABLE'
+                                         or PRIVILEGE='SELECT ANY TABLE')
+                     or GRANTED_ROLE in (select distinct GRANTEE
+                                         from DBA_ROLE_PRIVS
+                                         start with GRANTED_ROLE in (select distinct ROLE
+                                                                     from DBA_ROLES 
+                                                                     where ROLE in (select ROLE
+                                                                                    from ROLE_TAB_PRIVS
+                                                                                    where TABLE_NAME in (select TABLE_NAME
+                                                                                                         from DBA_TABLES
+                                                                                                         where TABLE_NAME=p_Tabla)
+                                                                                    and PRIVILEGE='SELECT'
+                                                                                    and OWNER=p_Propietario)
+                                                                     or ROLE in (select ROLE
+                                                                                 from ROLE_SYS_PRIVS
+                                                                                 where PRIVILEGE='READ ANY TABLE'
+                                                                                 or PRIVILEGE='SELECT ANY TABLE'))
+                                         connect by GRANTED_ROLE = prior GRANTEE));
+BEGIN
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('USERS PRIVILEGES READ: ');
+     for v_Usuarios in c_Usuarios loop
+          dbms_output.put_line('-'||v_Usuarios.USERNAME);
+     end loop;
+END;
+/
+
 
 CREATE OR REPLACE PROCEDURE MostartUserDML(p_Tabla VARCHAR2,
                                            p_Propietario VARCHAR2)
 IS
-     cursor c_Users is
-     select distinct GRANTEE 
-     from DBA_TAB_PRIVS 
-     where TABLE_NAME=p_Tabla
-     and OWNER=p_Propietario 
-     and (PRIVILEGE='INSERT' or PRIVILEGE='UPDATE' or PRIVILEGE='DELETE');
+     cursor c_Usuarios is
+     select USERNAME
+     from DBA_USERS 
+     where USERNAME in (select distinct GRANTEE
+                        from DBA_TAB_PRIVS
+                        where TABLE_NAME in (select TABLE_NAME
+                                             from DBA_TABLES
+                                             where TABLE_NAME=p_Tabla)
+                        and (PRIVILEGE='INSERT' or PRIVILEGE='UPDATE' or PRIVILEGE='DELETE')
+                        and OWNER=p_Propietario)
+     or USERNAME in (select distinct GRANTEE 
+                from DBA_SYS_PRIVS 
+                where PRIVILEGE='DELETE ANY TABLE'
+                or PRIVILEGE='UPDATE ANY TABLE'
+                or PRIVILEGE='INSERT ANY TABLE')
+     or USERNAME in (select distinct GRANTEE
+                     from DBA_ROLE_PRIVS
+                     where GRANTED_ROLE in (select distinct ROLE
+                                            from ROLE_TAB_PRIVS
+                                            where TABLE_NAME in (select TABLE_NAME
+                                                                 from DBA_TABLES
+                                                                 where TABLE_NAME=p_Tabla)
+                                            and (PRIVILEGE='INSERT' or PRIVILEGE='UPDATE' or PRIVILEGE='DELETE')
+                                            and OWNER=p_Propietario)
+                     or GRANTED_ROLE in (select distinct ROLE
+                                         from ROLE_SYS_PRIVS
+                                         where PRIVILEGE='DELETE ANY TABLE'
+                                         or PRIVILEGE='UPDATE ANY TABLE'
+                                         or PRIVILEGE='INSERT ANY TABLE')
+                     or GRANTED_ROLE in (select distinct GRANTEE
+                                         from DBA_ROLE_PRIVS
+                                         start with GRANTED_ROLE in (select distinct ROLE
+                                                                     from DBA_ROLES 
+                                                                     where ROLE in (select ROLE
+                                                                                    from ROLE_TAB_PRIVS
+                                                                                    where TABLE_NAME in (select TABLE_NAME
+                                                                                                         from DBA_TABLES
+                                                                                                         where TABLE_NAME=p_Tabla)
+                                                                                    and (PRIVILEGE='INSERT' or PRIVILEGE='UPDATE' or PRIVILEGE='DELETE')
+                                                                                    and OWNER=p_Propietario)
+                                                                     or ROLE in (select ROLE
+                                                                                 from ROLE_SYS_PRIVS
+                                                                                 where PRIVILEGE='DELETE ANY TABLE'
+                                                                                 or PRIVILEGE='UPDATE ANY TABLE'
+                                                                                 or PRIVILEGE='INSERT ANY TABLE'))
+                                         connect by GRANTED_ROLE = prior GRANTEE));
 BEGIN
-     for v_Usuario in c_Users loop
-          dbms_output.put_line(chr(9));
-          dbms_output.put_line('USERS PRIVILEGES DML:');
-          dbms_output.put_line(chr(9)||'-'||v_Usuario.GRANTEE);
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('USERS PRIVILEGES MODIFY DATAS: ');
+     for v_Usuarios in c_Usuarios loop
+          dbms_output.put_line('-'||v_Usuarios.USERNAME);
      end loop;
 END;
 /
 
+
 CREATE OR REPLACE PROCEDURE MostrarUserAlter(p_Tabla VARCHAR2,
                                              p_Propietario VARCHAR2)
 IS
-     cursor c_Users is
-     select distinct GRANTEE 
-     from DBA_TAB_PRIVS 
-     where TABLE_NAME=p_Tabla 
-     and PRIVILEGE='ALTER'
-     and OWNER=p_Propietario;
+     cursor c_Usuarios is
+     select USERNAME
+     from DBA_USERS 
+     where USERNAME in (select distinct GRANTEE
+                        from DBA_TAB_PRIVS
+                        where TABLE_NAME in (select TABLE_NAME
+                                             from DBA_TABLES
+                                             where TABLE_NAME=p_Tabla)
+                        and PRIVILEGE='ALTER'
+                        and OWNER=p_Propietario)
+     or USERNAME in (select distinct GRANTEE 
+                from DBA_SYS_PRIVS 
+                where PRIVILEGE='ALTER ANY TABLE')
+     or USERNAME in (select distinct GRANTEE
+                     from DBA_ROLE_PRIVS
+                     where GRANTED_ROLE in (select distinct ROLE
+                                            from ROLE_TAB_PRIVS
+                                            where TABLE_NAME in (select TABLE_NAME
+                                                                 from DBA_TABLES
+                                                                 where TABLE_NAME=p_Tabla)
+                                            and PRIVILEGE='ALTER'
+                                            and OWNER=p_Propietario)
+                     or GRANTED_ROLE in (select distinct ROLE
+                                         from ROLE_SYS_PRIVS
+                                         where PRIVILEGE='ALTER ANY TABLE')
+                     or GRANTED_ROLE in (select distinct GRANTEE
+                                         from DBA_ROLE_PRIVS
+                                         start with GRANTED_ROLE in (select distinct ROLE
+                                                                     from DBA_ROLES 
+                                                                     where ROLE in (select ROLE
+                                                                                    from ROLE_TAB_PRIVS
+                                                                                    where TABLE_NAME in (select TABLE_NAME
+                                                                                                         from DBA_TABLES
+                                                                                                         where TABLE_NAME=p_Tabla)
+                                                                                    and PRIVILEGE='ALTER'
+                                                                                    and OWNER=p_Propietario)
+                                                                     or ROLE in (select ROLE
+                                                                                 from ROLE_SYS_PRIVS
+                                                                                 where PRIVILEGE='ALTER ANY TABLE'))
+                                         connect by GRANTED_ROLE = prior GRANTEE));
 BEGIN
-     for v_Usuario in c_Users loop
-          dbms_output.put_line(chr(9));
-          dbms_output.put_line('USER PRIVILEGES MODIFY:');
-          dbms_output.put_line(chr(9)||'-'||v_Usuario.GRANTEE);
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('USERS PRIVILEGES MODIFY TABLES: ');
+     for v_Usuarios in c_Usuarios loop
+          dbms_output.put_line('-'||v_Usuarios.USERNAME);
      end loop;
 END;
 /
@@ -321,17 +618,51 @@ END;
 CREATE OR REPLACE PROCEDURE MostrarUserDrop(p_Tabla VARCHAR2,
                                             p_Propietario VARCHAR2)
 IS
-     cursor c_Users is
-     select distinct GRANTEE 
-     from DBA_TAB_PRIVS 
-     where TABLE_NAME=p_Tabla 
-     and PRIVILEGE='DROP'
-     and OWNER=p_Propietario;
+     cursor c_Usuarios is
+     select USERNAME
+     from DBA_USERS 
+     where USERNAME in (select distinct GRANTEE
+                        from DBA_TAB_PRIVS
+                        where TABLE_NAME in (select TABLE_NAME
+                                             from DBA_TABLES
+                                             where TABLE_NAME=p_Tabla)
+                        and PRIVILEGE='DROP'
+                        and OWNER=p_Propietario)
+     or USERNAME in (select distinct GRANTEE 
+                from DBA_SYS_PRIVS 
+                where PRIVILEGE='DROP ANY TABLE')
+     or USERNAME in (select distinct GRANTEE
+                     from DBA_ROLE_PRIVS
+                     where GRANTED_ROLE in (select distinct ROLE
+                                            from ROLE_TAB_PRIVS
+                                            where TABLE_NAME in (select TABLE_NAME
+                                                                 from DBA_TABLES
+                                                                 where TABLE_NAME=p_Tabla)
+                                            and PRIVILEGE='DROP'
+                                            and OWNER=p_Propietario)
+                     or GRANTED_ROLE in (select distinct ROLE
+                                         from ROLE_SYS_PRIVS
+                                         where PRIVILEGE='DROP ANY TABLE')
+                     or GRANTED_ROLE in (select distinct GRANTEE
+                                         from DBA_ROLE_PRIVS
+                                         start with GRANTED_ROLE in (select distinct ROLE
+                                                                     from DBA_ROLES 
+                                                                     where ROLE in (select ROLE
+                                                                                    from ROLE_TAB_PRIVS
+                                                                                    where TABLE_NAME in (select TABLE_NAME
+                                                                                                         from DBA_TABLES
+                                                                                                         where TABLE_NAME=p_Tabla)
+                                                                                    and PRIVILEGE='DROP'
+                                                                                    and OWNER=p_Propietario)
+                                                                     or ROLE in (select ROLE
+                                                                                 from ROLE_SYS_PRIVS
+                                                                                 where PRIVILEGE='DROP ANY TABLE'))
+                                         connect by GRANTED_ROLE = prior GRANTEE));
 BEGIN
-     for v_Usuario in c_Users loop
-          dbms_output.put_line(chr(9));
-          dbms_output.put_line('USER PRIVILEGES REMOVE:');
-          dbms_output.put_line(chr(9)||'-'||v_Usuario.GRANTEE);
+     dbms_output.put_line(chr(9));
+     dbms_output.put_line('USERS PRIVILEGES REMOVE TABLES: ');
+     for v_Usuarios in c_Usuarios loop
+          dbms_output.put_line('-'||v_Usuarios.USERNAME);
      end loop;
 END;
 /
@@ -343,7 +674,7 @@ IS
      cursor c_Extens is
      select seg.EXTENTS, seg.INITIAL_EXTENT, seg.NEXT_EXTENT, seg.MIN_EXTENTS, seg.MAX_EXTENTS, ex.FILE_ID
      from DBA_SEGMENTS seg, DBA_EXTENTS ex
-     where seg.SEGMENT_NAME = ex.SEGMENT_NAME 
+     where seg.SEGMENT_NAME = ex.SEGMENT_NAME
      and seg.SEGMENT_NAME=p_Tabla
      and seg.OWNER=p_Propietario;
 BEGIN
@@ -371,6 +702,71 @@ BEGIN
 END;
 /
 ```
+
+##### Prueba
+
+~~~
+SQL> exec MostrarInfoTabla('LOCALES');
+	
+.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+OWNER: PACO
+	
+USERS PRIVILEGES READ:
+-SYS
+-SYSTEM
+-USUARIOPRUEBA
+-GGSYS
+-GSMADMIN_INTERNAL
+-MDSYS
+-OLAPSYS
+-LUIS
+-USUARIO1
+-WMSYS
+-NUEVOUSUARIO
+	
+USERS PRIVILEGES MODIFY DATAS:
+-SYS
+-SYSTEM
+-USUARIOPRUEBA
+-GSMADMIN_INTERNAL
+-MDSYS
+-OLAPSYS
+-LUIS
+-USUARIO1
+-WMSYS
+-NUEVOUSUARIO
+	
+USERS PRIVILEGES MODIFY TABLES:
+-SYS
+-SYSTEM
+-GSMUSER
+-GGSYS
+-GSMADMIN_INTERNAL
+-MDSYS
+-USUARIO1
+-WMSYS
+-NUEVOUSUARIO
+	
+USERS PRIVILEGES DROP TABLES:
+-SYS
+-SYSTEM
+-GSMUSER
+-GSMADMIN_INTERNAL
+-OLAPSYS
+-USUARIO1
+-WMSYS
+-NUEVOUSUARIO
+	
+Nº Extensión  Inicio   Siguiente  Mínimo  Máximo        Fichero
+------------- -------- ---------- ------- ------------- -------------------------------
+1	      65536    1048576	  1	  2147483645	/opt/oracle/oradata/orcl/users01.dbf
+	
+.~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Procedimiento PL/SQL terminado correctamente.
+
+~~~
 
 ## Postgres:
 
@@ -400,7 +796,6 @@ Como podemos ver, la el proceso de control de espacio de almacenamiento se crea 
 * Como no pasa en Oracle, las transacciones se abortan si se encuentran con algun fallo durante la ejecución.
 * Es muy simple el soporte que aporta PostgreSQL.
 
-
 ## MySQL:
 
 ### Tarea 8
@@ -408,6 +803,15 @@ Como podemos ver, la el proceso de control de espacio de almacenamiento se crea 
 
 #### Averigua si existe el concepto de índice en MySQL y si coincide con el existente en ORACLE. Explica los distintos tipos de índices existentes.
 
+En MySQL existe el concepto de índice y es el mismo concepto que en oracle, el cual agilizan las busquedas en una tabla, para evitar recorrer toda la tabla para obtener los datos solicitados.
+
+Existen cinco tipos de índices en MySQL:
+
+* PRIMARY KEY: Índice sobre un o más campos donde cada valor es único y nunguno de los valores son NULL. 
+* KEY o INDEX:
+* UNIQUE: Índice que no es `PRIMARY KEY` pero que no permite que los sean iguales.
+* FULLTEXT: Índices que se usan en tablas `MyISAM`, y pueden contener uno o más campos del tipo `CHAR`, `VARCHAR` y `TEXT`. Este índice se utiliza para optimizar la busqueda de palabras clave en las tablas que tienen grandes cantidades de infomación en campos de texto.
+* SPATIAL: Índice que se utiliza sobre columnas de datos geométricos.
 
 
 ## MongoDB:
