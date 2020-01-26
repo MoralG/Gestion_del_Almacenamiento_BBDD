@@ -370,10 +370,10 @@ IS
                                          start with GRANTED_ROLE in (select distinct ROLE
                                                                      from DBA_ROLES 
                                                                      where ROLE in (select ROLE
-                                                                               from ROLE_TAB_PRIVS -- Privilegios sobre tablas.
-                                                                               where TABLE_NAME in (select TABLE_NAME
-                                                                                                    from DBA_TABLES
-                                                                                                    where TABLESPACE_NAME=p_Tablespace))
+                                                                                    from ROLE_TAB_PRIVS -- Privilegios sobre tablas.
+                                                                                    where TABLE_NAME in (select TABLE_NAME
+                                                                                                         from DBA_TABLES
+                                                                                                         where TABLESPACE_NAME=p_Tablespace))
                                                                      or ROLE in (select ROLE
                                                                                  from ROLE_SYS_PRIVS -- Privilegios del sistema
                                                                                  where PRIVILEGE='ALTER ANY TABLE'
@@ -490,9 +490,9 @@ IS
                         and PRIVILEGE='SELECT'
                         and OWNER=p_Propietario)
      or USERNAME in (select distinct GRANTEE 
-                from DBA_SYS_PRIVS 
-                where PRIVILEGE='READ ANY TABLE'
-                or PRIVILEGE='SELECT ANY TABLE')
+                     from DBA_SYS_PRIVS 
+                     where PRIVILEGE='READ ANY TABLE'
+                     or PRIVILEGE='SELECT ANY TABLE')
      or USERNAME in (select distinct GRANTEE
                      from DBA_ROLE_PRIVS
                      where GRANTED_ROLE in (select distinct ROLE
@@ -546,10 +546,10 @@ IS
                         and (PRIVILEGE='INSERT' or PRIVILEGE='UPDATE' or PRIVILEGE='DELETE')
                         and OWNER=p_Propietario)
      or USERNAME in (select distinct GRANTEE 
-                from DBA_SYS_PRIVS 
-                where PRIVILEGE='DELETE ANY TABLE'
-                or PRIVILEGE='UPDATE ANY TABLE'
-                or PRIVILEGE='INSERT ANY TABLE')
+                     from DBA_SYS_PRIVS 
+                     where PRIVILEGE='DELETE ANY TABLE'
+                     or PRIVILEGE='UPDATE ANY TABLE'
+                     or PRIVILEGE='INSERT ANY TABLE')
      or USERNAME in (select distinct GRANTEE
                      from DBA_ROLE_PRIVS
                      where GRANTED_ROLE in (select distinct ROLE
@@ -605,8 +605,8 @@ IS
                         and PRIVILEGE='ALTER'
                         and OWNER=p_Propietario)
      or USERNAME in (select distinct GRANTEE 
-                from DBA_SYS_PRIVS 
-                where PRIVILEGE='ALTER ANY TABLE')
+                     from DBA_SYS_PRIVS 
+                     where PRIVILEGE='ALTER ANY TABLE')
      or USERNAME in (select distinct GRANTEE
                      from DBA_ROLE_PRIVS
                      where GRANTED_ROLE in (select distinct ROLE
@@ -657,8 +657,8 @@ IS
                         and PRIVILEGE='DROP'
                         and OWNER=p_Propietario)
      or USERNAME in (select distinct GRANTEE 
-                from DBA_SYS_PRIVS 
-                where PRIVILEGE='DROP ANY TABLE')
+                     from DBA_SYS_PRIVS 
+                     where PRIVILEGE='DROP ANY TABLE')
      or USERNAME in (select distinct GRANTEE
                      from DBA_ROLE_PRIVS
                      where GRANTED_ROLE in (select distinct ROLE
@@ -707,13 +707,27 @@ IS
      and seg.OWNER=p_Propietario;
 BEGIN
      dbms_output.put_line(chr(9));
-     dbms_output.put_line(RPAD('Nº Extensión',13)||' '||RPAD('Inicio',8)||' '||RPAD('Siguiente',10)||' '||RPAD('Mínimo',7)||' '||RPAD('Máximo',13)||' '||RPAD('Fichero',40));
-     dbms_output.put_line(RPAD('-------------------------------',13)||' '||RPAD('-------------------------------',8)||' '||RPAD('-------------------------------',10)||' '||RPAD('-------------------------------',7)||' '||RPAD('-------------------------------',13)||' '||RPAD('-------------------------------',40));
+     dbms_output.put_line(RPAD('Nº Extensión',13)||' '||
+                          RPAD('Inicio',8)||' '||
+                          RPAD('Siguiente',10)||' '||
+                          RPAD('Mínimo',7)||' '||
+                          RPAD('Máximo',13)||' '||
+                          RPAD('Fichero',40));
+     dbms_output.put_line(RPAD('-------------------------------',13)||' '||
+                          RPAD('-------------------------------',8)||' '||
+                          RPAD('-------------------------------',10)||' '||
+                          RPAD('-------------------------------',7)||' '||
+                          RPAD('-------------------------------',13)||' '||
+                          RPAD('-------------------------------',40));
      for v_Extension in c_Extens loop
           v_File:=MostrarFicheroExt(v_Extension.FILE_ID);
-          dbms_output.put_line(RPAD(v_Extension.EXTENTS,13)||' '||RPAD(v_Extension.INITIAL_EXTENT,8)||' '||RPAD(v_Extension.NEXT_EXTENT,10)||' '||RPAD(v_Extension.MIN_EXTENTS,7)||' '||RPAD(v_Extension.MAX_EXTENTS,13)||' '||RPAD(v_File,40));
+          dbms_output.put_line(RPAD(v_Extension.EXTENTS,13)||' '||
+                               RPAD(v_Extension.INITIAL_EXTENT,8)||' '||
+                               RPAD(v_Extension.NEXT_EXTENT,10)||' '||
+                               RPAD(v_Extension.MIN_EXTENTS,7)||' '||
+                               RPAD(v_Extension.MAX_EXTENTS,13)||' '||
+                               RPAD(v_File,40));
      end loop;
-     
 END;
 /
 
