@@ -818,7 +818,7 @@ Procedimiento PL/SQL terminado correctamente.
 
 PostgreSQL es un gestor de base de datos donde no hay cláusulas de almacenamiento de datos como en Oracle pero hay una función que nos permite controlar el espacio de las tablas e índices. 
 
-La función de la que estoy hablando es `pg_total_relation_size`, con la que se puede controlar el espacio usado por un tabla, incluyendo indices y tablas TOAST. La sintaxis es:
+La función de la que estoy hablando es `pg_total_relation_size`, con la que se puede controlar el espacio usado por un tabla, incluyendo indices y tablas TOAST. La sintaxis utilizando la función es:
 
 ```sql
 CREATE VIEW user_disk_usage AS SELECT r.rolname, SUM(pg_total_relation_size(c.oid)) AS total_disk_usage 
