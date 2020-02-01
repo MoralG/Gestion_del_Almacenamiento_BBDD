@@ -307,13 +307,17 @@ Para listar a todos los usuarios que tengan acceso de escritura y lectura de un 
 * Mostrar los **propietarios de las tablas** del tablespace.
 * Mostrar los usuarios y que tienen **privilegios sobre las tablas** del tablespace
 * Mostrar los usuarios que tienen **privilegios del sistema** de todas las tablas como:
-     * `ALTER ANY TABLE`
-     * `INSERT ANY TABLE`
-     * `UPDATE ANY TABLE`
-     * `DELETE ANY TABLE`
-     * `DROP ANY TABLE`
-     * `READ ANY TABLE`
-     * `SELECT ANY TABLE`
+  
+|Privilegios del sistema|
+|:---------------------:|
+|ALTER ANY TABLE        |
+|INSERT ANY TABLE       |
+|UPDATE ANY TABLE       |
+|DELETE ANY TABLE       |
+|DROP ANY TABLE         |
+|READ ANY TABLE         |
+|SELECT ANY TABLE       |
+
 * Mostrar a los **propietarios de los indexes** del tablespace.
 * Mostrar a los **propietarios de los clusters** del tablespace.
 * Mostrar los usuarios que tienen un rol, o de manera recursiva tienen un rol, que le otorguen los privilegios del sistema o de las tablas del tablespace.
@@ -322,6 +326,9 @@ Sabiendo todo lo que tenemos que mostrar, podemos pasar a realizar el procedimie
 
 ###### Procedimento que muestra a los usuarios que tienen permiso de lecturas y escritura sobre los objetos de un tablespace
 ```sql
+set pagesize 999
+set linesize 999
+
 CREATE OR REPLACE PROCEDURE MostrarUsuariosAccesoTS(p_Tablespace VARCHAR2)
 IS
      cursor c_Usuarios is
@@ -438,14 +445,18 @@ Para realizar este procedimiento hay que tener en cuenta varias cosas:
   * Los privilegios sobre tablas.
   * Tener en cuenta los roles que tienen los privilegios como en la Tarea 5.
 
+Sabiendo esto podemos pasar al procedimiento.
+
 ###### Procedimiento que muestra el propietario, los usuarios con privilegios, extensiones y ruta del fichero de una determinada tabla
 ```sql
 set pagesize 999
 set linesize 999
 
+-- Procedimiento principal, donde agrupamos todos los procedimientos de MOSTRAR.
 CREATE OR REPLACE PROCEDURE MostrarInfoTabla(p_Tabla VARCHAR2)
 IS
-     cursor c_Propietarios is
+-- Tenemos que enviar el OWNER a todos los procedimientos, como indicamos en los puntos anteriores.
+     cursor c_Propietarios is 
      select distinct OWNER
      from DBA_TABLES 
      where TABLE_NAME=p_Tabla;
@@ -465,6 +476,7 @@ BEGIN
 END;
 /
 
+-- Procedimiento para mostrar los propietarios.
 CREATE OR REPLACE PROCEDURE MostrarPropietario(p_Tabla VARCHAR2,
                                                p_Propietario VARCHAR2)
 IS
@@ -476,6 +488,7 @@ BEGIN
 END;
 /
 
+-- Procedimiento para mostrar los usuarios con privilegios de lectura.
 CREATE OR REPLACE PROCEDURE MostrarUserPrivsREAD(p_Tabla VARCHAR2,
                                                  p_Propietario VARCHAR2)
 IS
@@ -531,7 +544,7 @@ BEGIN
 END;
 /
 
-
+-- Procedimiento para mostrar los usuarios con privilegios de modificación de registros.
 CREATE OR REPLACE PROCEDURE MostartUserDML(p_Tabla VARCHAR2,
                                            p_Propietario VARCHAR2)
 IS
@@ -590,7 +603,7 @@ BEGIN
 END;
 /
 
-
+-- Procedimiento para mostrar los usuarios con privilegios de modificar la estructura de las tablas.
 CREATE OR REPLACE PROCEDURE MostrarUserAlter(p_Tabla VARCHAR2,
                                              p_Propietario VARCHAR2)
 IS
@@ -643,6 +656,7 @@ BEGIN
 END;
 /
 
+-- Procedimiento para mostrar los usuarios con privilegios de borrar las tablas.
 CREATE OR REPLACE PROCEDURE MostrarUserDrop(p_Tabla VARCHAR2,
                                             p_Propietario VARCHAR2)
 IS
@@ -695,9 +709,11 @@ BEGIN
 END;
 /
 
+-- Procedimiento para mostrar la información de las extensiones.
 CREATE OR REPLACE PROCEDURE MostrarExt(p_Tabla VARCHAR2,
                                        p_Propietario VARCHAR2)
 IS
+-- Realizamos un join con la vista DBA_EXTENTS para obtener el FILE_ID y mandarlo a la función MostrarFicheroExt.
      v_File VARCHAR2(50);
      cursor c_Extens is
      select seg.EXTENTS, seg.INITIAL_EXTENT, seg.NEXT_EXTENT, seg.MIN_EXTENTS, seg.MAX_EXTENTS, ex.FILE_ID
@@ -731,6 +747,7 @@ BEGIN
 END;
 /
 
+-- Función que devuelve la ruta y el nombre del datafile por el ID.
 CREATE OR REPLACE FUNCTION MostrarFicheroExt(p_FileID VARCHAR2)
 RETURN VARCHAR2
 IS
@@ -828,7 +845,9 @@ AND c.relowner = r.oid
 GROUP BY c.relowner;
 ```
 
-Como podemos ver, el proceso de control de espacio de almacenamiento se crea con una vista y utilizando la función `pg_total_relation_size`.
+Como podemos ver, el proceso de control de espacio de almacenamiento se crea con una vista y utilizando la función `pg_total_relation_size`, configuramos una tabla concreto de la base de datos.
+
+Esta vista nos permite ver el almacenamiento ocupado de una tabla pero no se le pueden aplicar clausulas de almacenamiento como asignarle cuotas, crear tablespace o limitar el almacenamiento de una tabla en la base de datos.
 
 ##### Inconvenientes
 
@@ -846,15 +865,13 @@ En MySQL existe el concepto de índice y es el mismo concepto que en oracle, el 
 
 Existen cuatro tipos de índices en MySQL:
 
-* INDEX: Índice que no único, es decir, índice que admite valores duplicados sin restrinciones, solo para mejorar el tiempo de ejecucción de las consultas.
-  
-* UNIQUE: Índice que restringe el uso valores duplicados, puede haber varios índices `UNIQUE` al contrario que el índice `PRIMARY`.
-
-* PRIMARY: Índice en el que todas las columnas deben de tener un valor único, igual que el `UNIQUE` pero solo puede haber un índice `PRIMARY` en una de las tablas. 
-  
-* FULLTEXT: Índices que pueden contener uno o más campos del tipo `CHAR`, `VARCHAR` y `TEXT`. Este índice se utiliza para optimizar la busqueda de palabras clave en las tablas que tienen grandes cantidades de infomación en campos de texto.
-  
-* SPATIAL: Índice que se emplean para realizar búsquedas sobre datos que componen formas geométricas.
+|Índices  | Descripción
+|:-------:|:---------------------------------------------------------------------------------------------------------------------------------
+|INDEX    | Índice que no único, es decir, índice que admite valores duplicados sin restrinciones, solo para mejorar el tiempo de ejecucción de las consultas.
+|UNIQUE   | Índice que restringe el uso valores duplicados, puede haber varios índices `UNIQUE` al contrario que el índice `PRIMARY`.
+|PRIMARY  | Índice en el que todas las columnas deben de tener un valor único, igual que el `UNIQUE` pero solo puede haber un índice `PRIMARY` en una de las tablas.
+|FULLTEXT | Índices que pueden contener uno o más campos del tipo `CHAR`, `VARCHAR` y `TEXT`. Este índice se utiliza para optimizar la busqueda de palabras clave en las tablas que tienen grandes cantidades de infomación en campos de texto.
+|SPATIAL  | Índice que se emplean para realizar búsquedas sobre datos que componen formas geométricas.  
 
 Todos estos índices pueden emplear una o más columnas.
 
@@ -867,3 +884,15 @@ Si lo comparamos con los índices de Oracle, podemos ver un poco de similitud po
 
 #### Explica los distintos motores de almacenamiento que ofrece MongoDB, sus características principales y en qué casos es más recomendable utilizar cada uno de ellos.
 
+Los motores de almacenamiento son una de las funciones más interesantes de MongoDB, se añadieron en la versión 3.0. Los motores de almacenamiento ofrecen mejoras significativas en el rendimiento del servidor de MongoDb, como en la eficiencia de la compresión o concurrencia. Además de la escalabilidad al servir como interfaz entre el servidor de MongoDB y el disco físico.
+
+Hay diferentes tipos de moteres de almacenamientos:
+
+|Motor de almacenamiento| Descripción
+|:-------------:|:----------------------
+|Fusión-io| Es un motor de almacenamiento creado por SanFisk, que omite la capa del sistema de archivos del sistema operativo y escribe directamente en el dispositivo de almacenamiento. Esto mejora significativamente el rendimiento y la eficiencia de los recursos.
+|En memoria| Es un tipo de motor de almacenamiento donde todos los datos se almacenan en la memoria volátil (RAM) para realizar lectura y acceso más rápidos. Para solucionar el problema del borrado al reinicio del servidor, podemos configurar réplicas standard para obtener failover automático ( que es el modo de funcionamiento de respaldo en el que las funciones de un componente del sistema, el caso de la RAM, son asumidos por componentes del sistema secundario cuando el componente principal no esta disponible).
+|MMAP| Es un motor de almacenamiento que optimiza la lectura de los ficheros grandes al guardalos en una memoria virtual y si tiene que leer una parte pequeña del fichero, este sistema realiza la lectura de manera eficiente. La desventaja es que no se puede procesar dos llamadas de escritura en paralelo para la misma colección.
+|Rocas Mongo| Un motor de valor-clave creado para integrarse con RockDB de Facebook.
+|TokuMX| Un motor de almacenamiento creado por Pecona que utiliza índices de árboles fractales. Los árboles fractales (fractal tree), es una estructura de datos que mantiene los datos ordenados y permite búsquedas al mismo tiempo que un treeB que suele utlizar Oracle pero con insercciones y eliminaciones que son más rápidas.
+|WiredTiger| Un motor de almacenamiento, actualmente el predeterminado de MongoDB, que admite árboles LSM para almacenar índices, estos árboles son mejores en operaciones de escitura donde las grandes cargas de trabajo son de inserciones aleatorias. En WiredTiger no se actualizaran los datos, sino que se crearán nuevo datos y se eliminarán lo anterior. Además dos o más operaciones de escritura no afectarán al mismo documento.
