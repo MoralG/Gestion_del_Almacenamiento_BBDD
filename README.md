@@ -37,5 +37,4 @@
   * [MySQL](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/AlejandroM_Individual.md#mysql)
   * [MongoDB](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/AlejandroM_Individual.md#mongodb)
   
-* [Parte Grupal]()
-  * [Oracle]()
+* [Parte Grupal](https://github.com/MoralG/Gestion_del_Almacenamiento_BBDD/blob/master/Grupal_Almacenamiento.md#parte-grupal)
