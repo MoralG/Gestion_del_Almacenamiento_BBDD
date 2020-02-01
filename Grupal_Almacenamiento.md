@@ -439,7 +439,77 @@ autoextend on;
 ## Tarea 7 
 #### Realizad un pequeño artículo o una entrada para un blog técnico explicando las limitaciones quepresentan MySQL y Postgres para gestionar el almacenamiento de los datos respecto a ORACLE, si esque presentan alguna.
 
+### PostgreSQL
 
+El **Storage Manager** es quien lleva a cabo la administración de almacenamiento de datos. PostgreSQL posee un solo **Storage Manager**, y este esta compuesto por varios módulos que proveen administración de las transacciones y acceso a los objetos de la base de datos. Estos tienen principalmente 3 objetivos:
+
+- Manejar transacciones sin necesidad de escribir código complejo de recuperación en caso de caídas.
+- Mantener versiones históricas de la data bajo el concepto de “graba una vez, lee muchas veces”.
+- Tomar las ventajas que ofrece el hardware especializado como multiprocesadores, memoria no volátil, etc.
+
+Los nombres de estos módulos son: Transaction System, Relational Storage, Time Management, Record Access, Concurrency Control y Timestamp Management.
+
+Otras características del almacenamiento en PostgreSQL:
+
+- En PostgreSQL no es posible almacenar archivos muy grandes directamente. Para superar esta limitación, se comprimen y/o se dividen en múltiples filas. Esta técnica se conoce como **TOAST**.
+- El tamaño mínimo, y por defecto, de una página es de 8k y máximo 32k. No se permiten tuplas más grandes que las páginas.
+- Cada relación en una base de datos tiene un **Visibility Map**, que se encarga de realizar un seguimiento de las mismas.
+- El **Free Space Map** se encarga de realizar un seguimiento del espacio disponible en una relación.
+
+Limitaciones respecto a ORACLE:
+
+- Antes de la versión 9.0 no soportaba tablespaces para definir dónde almacenar la base de datos, el esquema, los índices, etc.
+- No presenta clausulas de almacenamiento de datos, lo que impide asignar cuotas de almacenamiento.
+- Las transacciones se abortan completamente en caso de fallo durante su ejecución.
+- Tamaño máximo de una tabla: 32 TB.
+- Tamaño máximo de una fila: 400 GB
+- Tamaño máximo de un campo: 1 GB
+
+### MySQL
+
+Las principales caracteristicas del almacenamiento de los datos en MySql son los motores de almacenamientos.
+
+Los motor de almacenamiento son los encargados de controlar y recuperar los datos de un tabla. Los mas relevantes son:
+
+|Motor de almacenamiento| Descripción
+|:------:|:----------
+|MyISAM| Es el motor de almacenamiento que se utiliza por defecto. La pricipal caracteristica de este motor es la gran velocidad que obtiene en las consultas, ya que no tiene que hacer comprobaciones de la integridad referencial.
+|InnoDB| este motor empieza a sustituir a MyISAM. Soporta transacciones y bloqueos de registro e integridad referencial, además ofrece una fiabilidad y consistencia muy superior a MyISAM.
+|NBD| Es el motor usado por Mysql Cluster para implementar tablas que se particionan en varias máquinas.
+
+Limitaciones respecto a ORACLE:
+
+- En MySQL el número máximo de índices por cada tabla es 64, en cambio en Oracle es ilimitado.
+- Las columnas usadas en índices son de 16 columnas como máximo y en Oracle es el doble.
+- El número máximo de registros es de 50 millones y 450 mil millones en Oracle.
+- Tamaño máximo de índice: 1 GB.
+
+En Mysql como en Oracle podemos crear y asignar un tablespace, además de el tamaño inicial de una tabla, la característica de que pueda extenderse automáticamente en el caso que hiciera falta y asignar un cierto tamaño a la extensión. La sintaxis para crear un tablespace es la que veremos a continuación:
+
+```sql
+CREATE TABLESPACE tablespace_name
+
+  InnoDB and NDB:
+    ADD DATAFILE 'file_name'
+
+  InnoDB only:
+    [FILE_BLOCK_SIZE = value]
+
+  NDB only:
+    USE LOGFILE GROUP logfile_group
+    [EXTENT_SIZE [=] extent_size]
+    [INITIAL_SIZE [=] initial_size]
+    [AUTOEXTEND_SIZE [=] autoextend_size]
+    [MAX_SIZE [=] max_size]
+    [NODEGROUP [=] nodegroup_id]
+    [WAIT]
+    [COMMENT [=] 'string']
+
+  InnoDB and NDB:
+    [ENGINE [=] engine_name]
+```
+
+La principal desventaja de Mysql respecto a Oracle es que en INNODB no podemos asignar una cuota a cada usuario en cualquier tablespace. Un tablespace creado en INNODB es considerado un tablespace general, el cual es compartido y es similar al tablespace del sistema.
 
 ## Tarea 8
 #### Explicad en qué consiste el sharding en MongoDB.
@@ -468,12 +538,15 @@ El sharding trabaja a nivel de colección, con esto podemos decidir que coleccio
 
 En nuestra empresa existen tres departamentos: Informática, Ventas y Producción. En Informática trabajan tres personas: Pepe, Juan y Clara. En Ventas trabajan Ana y Eva y en Producción Jaime y Lidia.
 
-**a)**  Pepe es el administrador de la base de datos.
-Juan y Clara son los programadores de la base de datos, que trabajan tanto en la aplicación que usa el departamento de Ventas como en la usada por el departamento de Producción.
-Ana y Eva tienen permisos para insertar, modificar y borrar registros en las tablas de la aplicación de Ventas que tienes que crear, y se llaman Productos y Ventas, siendo propiedad de Ana.
-Jaime y Lidia pueden leer la información de esas tablas pero no pueden modificar la información.
+### Apartado (a)
+
+* Pepe es el administrador de la base de datos.
+* Juan y Clara son los programadores de la base de datos, que trabajan tanto en la aplicación que usa el departamento de Ventas como en la usada por el departamento de Producción.
+* Ana y Eva tienen permisos para insertar, modificar y borrar registros en las tablas de la aplicación de Ventas que tienes que crear, y se llaman Productos y Ventas, siendo propiedad de Ana.
+* Jaime y Lidia pueden leer la información de esas tablas pero no pueden modificar la información.
 Crea los usuarios y dale los roles y permisos que creas conveniente.  
 
+---------------------------------------------------
 
 Creamos al usuario Pepe, que va a ser el Adminsitrador, por eso le asignamos el rol DBA. El rol DBA tiene el privilegio de ver y manejar todos los datos de la BD.
 ```sql
@@ -565,8 +638,9 @@ create user Lidia identified by lidia;
 ```
 
 
-Utilizamos `GRANT READ` Bloquea los registros que devuelve el **SELECT** para que no puedan ser modificados, los registros que se le aplique el `for update`, por otras secciones.
-Para que este bloqueo no se pueda realizar, tenemos utilizar el privilegio de `GRANT READ`, en vez de `GRANT SELECT`.
+Vamos a utilizar el permiso de `GRANT READ`, porque el privilegio de `GRANT SELECT`, bloquea los registros que devuelve el `SELECT` para que no puedan ser modificados, los registros que se le aplique el `for update`, por otras secciones.
+
+
 ```sql
 create role Produccion;
 grant connect to Produccion;
@@ -576,27 +650,35 @@ grant Produccion to Jaime;
 grant Produccion to Lidia;
 ```
 
-**b)** Los espacios de tablas son System, Producción (ficheros prod1.dbf y prod2.dbf) y Ventas (fichero vent.dbf).
+### Apartado (b)
 
-Los programadores del departamento de Informática pueden crear objetos en cualquier tablespace de la base de datos, excepto en System.
-Los demás usuarios solo podrán crear objetos en su tablespace correspondiente teniendo un límite de espacio de 30 M los del departamento de Ventas y 100K los del de Producción.
-Pepe tiene cuota ilimitada en todos los espacios, aunque el suyo por defecto es System.
+Los espacios de tablas son System, Producción (ficheros prod1.dbf y prod2.dbf) y Ventas (fichero vent.dbf).
 
-##### TABLESPACE SYSTEM ya existe.
+* Los programadores del departamento de Informática pueden crear objetos en cualquier tablespace de la base de datos, excepto en System.
+* Los demás usuarios solo podrán crear objetos en su tablespace correspondiente teniendo un límite de espacio de 30 M los del departamento de Ventas y 100K los del de Producción.
+* Pepe tiene cuota ilimitada en todos los espacios, aunque el suyo por defecto es System.
 
-##### Si un tablespace está formado por 2 datafiles y tenemos una tabla en ese tablespace, a medida que vamos insertando filas éstas se almacenarán en cualquiera de los dos datafiles indistintamente, es decir, unas pueden estar en un datafile y otras en otro.
+-----------------------------------------------------
 
+Si un tablespace está formado por 2 datafiles y tenemos una tabla en ese tablespace, a medida que vamos insertando filas éstas se almacenarán en cualquiera de los dos datafiles indistintamente, es decir, unas pueden estar en un datafile y otras en otro. 
+
+Tenemos que tener también en cuenta que el espacio de tabla `SYSTEM` ya existe.
+
+###### Crearemos ambos tablespaces para poder poner las cuotas a ambos usuarios
 ```sql
-create tablespace Produccion
-datafile '/opt/oracle/oradata/orcl/prod1.dbf' size 50M,
-'/opt/oracle/oradata/orcl/prod2.dbf' size 50M
-autoextend off;
+CREATE TABLESPACE Produccion
+DATAFILE '/opt/oracle/oradata/orcl/prod1.dbf' SIZE 50M,
+'/opt/oracle/oradata/orcl/prod2.dbf' SIZE 50M
+AUTOEXTEND OFF;
 
-create tablespace Ventas
-datafile '/opt/oracle/oradata/orcl/vent.dbf' size 100M
-autoextend off;
+CREATE TABLESPACE Ventas
+DATAFILE '/opt/oracle/oradata/orcl/vent.dbf' SIZE 100M
+AUTOEXTEND OFF;
 ```
 
+Añadiremos las cuotas a los usuarios, en este caso Ana y Eva tendran el límite de 30M y Lidia y Jaime de 100k
+
+###### Añadimos las cuotas
 ```sql
 ALTER USER ANA DEFAULT TABLESPACE VENTAS QUOTA 30M ON VENTAS;
 ALTER USER EVA DEFAULT TABLESPACE VENTAS QUOTA 30M ON VENTAS;
@@ -604,13 +686,85 @@ ALTER USER LIDIA DEFAULT TABLESPACE PRODUCCION QUOTA 100K ON PRODUCCION;
 ALTER USER JAIME DEFAULT TABLESPACE PRODUCCION QUOTA 100K ON PRODUCCION;
 ```
 
+Y a pepe lo añadiremos con el tablespace system.
+
+
 ```sql
 ALTER USER PEPE DEFAULT TABLESPACE SYSTEM;
 GRANT UNLIMITED TABLESPACE TO PEPE;
 ```
 
-**c)** Pepe quiere crear una tabla Prueba que ocupe inicialmente 256K en el tablespace Ventas.
+```sql
+CREATE OR REPLACE PROCEDURE DarPrivilegiosTablespaces(p_user VARCHAR2)
+IS
+BEGIN
+	dbms_output.put_line('GRANT UNLIMITED TABLESPACE TO '||p_user||';');
+	dbms_output.put_line('ALTER USER '||p_user||' QUOTA 0 ON SYSTEM'||';');
+END;
+/
 
-**d)** Pepe decide que los programadores tengan acceso a la tabla Prueba antes creada y puedan ceder ese derecho y el de conectarse a la base de datos a los usuarios que ellos quieran.
-	
-**f)** Lidia y Jaime dejan la empresa, borra los usuarios y el espacio de tablas correspondiente, detalla los pasos necesarios para que no quede rastro del espacio de tablas.
+CREATE OR REPLACE PROCEDURE ObjetosTablespaceProgramadores
+IS
+	cursor c_users is
+	select GRANTEE
+	from dba_role_privs
+	where Granted_Role='PROGRAMADORES'
+	and Grantee!='SYS';
+BEGIN
+	for v_users in c_users loop
+		DarPrivilegiosTablespaces(v_users.Grantee);
+	end loop;
+END;
+/
+```
+
+###### Comprobamos como funciona
+```sql
+EXEC ObjetosTablespaceProgramadores();
+    GRANT UNLIMITED TABLESPACE TO JUAN;
+    ALTER USER JUAN QUOTA 0 ON SYSTEM;
+    GRANT UNLIMITED TABLESPACE TO CLARA;
+    ALTER USER CLARA QUOTA 0 ON SYSTEM;
+
+    Procedimiento PL/SQL terminado correctamente.
+```
+
+
+### Apartado (c)
+
+Pepe quiere crear una tabla Prueba que ocupe inicialmente 256K en el tablespace Ventas.
+
+----------------------------------------------------------
+
+Nos conectamos al usuario Pepe y creamos la tabla con las indicaciones dadas.
+
+```sql
+CREATE TABLE Prueba( 
+    Prueba VARCHAR2(2)
+    )
+    TABLESPACE Ventas
+    STORAGE(Initial 256K);
+```
+
+### Apartado (d)
+
+Pepe decide que los programadores tengan acceso a la tabla Prueba antes creada y puedan ceder ese derecho y el de conectarse a la base de datos a los usuarios que ellos quieran.
+
+----------------------------------------------------------
+
+```sql
+GRANT READ ON PEPE.PRUEBA TO PROGRAMADORES with grant option;
+GRANT CREATE SESSION TO PROGRAMADORES with admin option;
+```
+
+### Apartado (f)
+
+Lidia y Jaime dejan la empresa, borra los usuarios y el espacio de tablas correspondiente, detalla los pasos necesarios para que no quede rastro del espacio de tablas.
+
+----------------------------------------------------------
+
+```sql
+DROP USER Lidia;
+DROP USER Jaime;
+DROP TABLESPACE Produccion INCLUDING CONTENTS AND DATAFILES;
+```
