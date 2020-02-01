@@ -13,17 +13,17 @@
 
 ### Índice
 
-* [Alumno 1]()
-  * [Oracle]()
-  * [Postgres]()
-  * [MySQL]()
-  * [MongoDB]()
+* [Alumno 1](https://github.com/ftiradob/Gestion_almacenamiento_BBDD#alumno-1)
+  * [Oracle](https://github.com/ftiradob/Gestion_almacenamiento_BBDD#oracle)
+  * [Postgres](https://github.com/ftiradob/Gestion_almacenamiento_BBDD#postgresql)
+  * [MySQL](https://github.com/ftiradob/Gestion_almacenamiento_BBDD#mariadb)
+  * [MongoDB](https://github.com/ftiradob/Gestion_almacenamiento_BBDD#mongodb)
   
-* [Alumno 2]()
-  * [Oracle]()
-  * [Postgres]()
-  * [MySQL]()
-  * [MongoDB]()
+* [Alumno 2](https://github.com/alexrr12341/Almacenamiento_BBDD_Alumno2#alumno-2)
+  * [Oracle](https://github.com/alexrr12341/Almacenamiento_BBDD_Alumno2#oracle)
+  * [Postgres](https://github.com/alexrr12341/Almacenamiento_BBDD_Alumno2#postgres)
+  * [MySQL](https://github.com/alexrr12341/Almacenamiento_BBDD_Alumno2#mysql)
+  * [MongoDB](https://github.com/alexrr12341/Almacenamiento_BBDD_Alumno2#mongodb)
 
 * [Alumno 3]()
   * [Oracle]()
