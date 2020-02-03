@@ -419,23 +419,6 @@ END;
 
 ![BalanceoCarga](image/Balanceo.png)
 
-
-create temporary tablespace custom_temp1
-tempfile '/opt/oracle/oradata/orcl/customtemp1.dbf'
-size 5M
-autoextend on;
-
-create temporary tablespace custom_temp2
-tempfile '/opt/oracle/oradata/orcl/customtemp2.dbf'
-size 5M
-autoextend on;
-
-create temporary tablespace custom_temp3
-tempfile '/opt/oracle/oradata/orcl/customtemp3.dbf'
-size 5M
-autoextend on;
-
-
 ## Tarea 7 
 #### Realizad un pequeño artículo o una entrada para un blog técnico explicando las limitaciones quepresentan MySQL y Postgres para gestionar el almacenamiento de los datos respecto a ORACLE, si esque presentan alguna.
 
